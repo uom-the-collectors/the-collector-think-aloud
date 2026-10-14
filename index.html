@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Project-1-Game | Think-Aloud</title>
+    <link rel="stylesheet" href="TemplateData/recorder.css">
+  </head>
+  <body>
+    <canvas id="unity-canvas" tabindex="-1" style="background: #231F20"></canvas>
+
+    <div id="setup" class="overlay">
+      <form id="setup-form" class="panel" novalidate>
+        <header>
+          <p class="eyebrow">Project-1-Game</p>
+          <h1>Think-aloud session</h1>
+          <p class="lead">
+            Thank you for helping us evaluate our game, <i>The Collector</i>. In this puzzle game set in 2176, you will
+            be welcomed to the Central Archive, where nothing is as it seems and everything is out of place. You will 
+            solve riddles to find the missing pieces of the Archive and restore order to the world.
+          </p>
+          <p>
+            You can choose how much data you'd like to share with us, but we would like to record your screen, webcam, 
+            and microphone so we can see how you play and hear your thoughts. You can stop the recording at any time
+            and choose what information you share. The gameplay shouldn't take much longer than 10 minutes (unless you 
+            want it to).
+          </p>
+          <p>
+            You may wish to assist us by completing a 
+              <a href="https://docs.google.com/forms/d/e/1FAIpQLSe3uZqfdHmA7BIgYZuNoPyamCOj0vDoLa8xvrsrumDtsx5PiQ/viewform?usp=publish-editor">short questionnaire</a>
+            about the game instead of sharing recording data with us (please don't do both).
+          </p>
+        </header>
+
+        <fieldset>
+          <legend>Record</legend>
+          <label class="check"><input id="use-screen" type="checkbox" checked> Game screen and game audio</label>
+          <label class="check"><input id="use-camera" type="checkbox" checked> Webcam</label>
+          <label class="check"><input id="use-mic" type="checkbox" checked> Microphone</label>
+          <label class="check sub"><input id="show-preview" type="checkbox"> Show the webcam preview to the participant</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Save recordings</legend>
+          <label class="check" id="folder-option"><input type="radio" name="save" id="save-folder"> Straight to a folder while recording <span class="tag">recommended</span></label>
+          <div class="folder-row" id="folder-row">
+            <button type="button" id="choose-folder" class="secondary">Choose folder…</button>
+            <span id="folder-name" class="muted">No folder chosen</span>
+          </div>
+          <label class="check"><input type="radio" name="save" id="save-download"> Download when the session ends</label>
+        </fieldset>
+
+        <label class="check consent"><input id="consent" type="checkbox"> The participant has agreed to be recorded.</label>
+
+        <p id="setup-error" class="error" role="alert" hidden></p>
+
+        <div class="actions">
+          <button type="submit" id="start-btn" class="primary">Start recording</button>
+          <button type="button" id="play-only" class="secondary">Play without recording</button>
+        </div>
+        <p class="hint">When the browser asks what to share, pick <strong>this tab</strong> and leave <strong>Also share tab audio</strong> on. Mark a moment with the <kbd>`</kbd> key or the Mark button.</p>
+        <p id="load-status" class="muted small">Loading game… 0%</p>
+      </form>
+    </div>
+
+    <div id="bar" role="status" hidden>
+      <span class="rec-dot" aria-hidden="true"></span>
+      <span class="rec-label">REC</span>
+      <span id="elapsed" class="mono">0:00:00</span>
+      <button type="button" id="mark-btn" class="chip">Mark <span id="mark-count" class="count">0</span></button>
+      <button type="button" id="stop-btn" class="chip danger">Stop</button>
+    </div>
+    <video id="webcam-preview" muted playsinline autoplay hidden></video>
+
+    <div id="done" class="overlay" hidden>
+      <div class="panel">
+        <h1 id="done-title">Session saved</h1>
+        <p id="done-summary" class="lead"></p>
+        <ul id="done-files" class="files"></ul>
+        <div class="actions">
+          <button type="button" id="download-all" class="primary" hidden>Download all</button>
+          <button type="button" id="new-session" class="secondary">Start a new session</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="TemplateData/recorder.js"></script>
+    <script src="Build/Build.loader.js"></script>
+    <script>
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        arguments: [],
+        dataUrl: "Build/Build.data",
+        frameworkUrl: "Build/Build.framework.js",
+        codeUrl: "Build/Build.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "Project-1-Game",
+        productVersion: "0.1",
+      }, ThinkAloud.loadProgress)
+        .then(ThinkAloud.gameLoaded)
+        .catch(ThinkAloud.gameFailed);
+    </script>
+  </body>
+</html>
