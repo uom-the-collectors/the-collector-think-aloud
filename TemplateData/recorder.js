@@ -86,6 +86,11 @@
     ui.start.disabled = true;
   }
 
+  // Neither start button works until the game has loaded, so nobody lands on an empty canvas
+  ui.start.disabled = true;
+  ui.start.textContent = 'Loading game…';
+  ui.playOnly.disabled = true;
+
   ui.saveFolder.addEventListener('change', updateFolderRow);
   ui.saveDownload.addEventListener('change', updateFolderRow);
   function updateFolderRow() {
@@ -108,6 +113,7 @@
   ui.form.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearError();
+    if (!gameLoadedAt) return showError('The game is still loading. Please wait for it to finish.');
 
     const problem = !ui.useScreen.checked && !ui.useCamera.checked && !ui.useMic.checked ? 'Choose at least one thing to record.'
       : ui.saveFolder.checked && !folder ? 'Choose a folder to save to, or switch to downloading at the end.'
@@ -156,6 +162,7 @@
 
   // Just play: no consent, permissions or files, and no REC bar
   ui.playOnly.addEventListener('click', () => {
+    if (!gameLoadedAt) return;
     ui.setup.hidden = true;
     ui.canvas.focus();
   });
@@ -455,6 +462,9 @@
     gameLoaded(instance) {
       gameLoadedAt = new Date();
       ui.loadStatus.textContent = 'Game loaded.';
+      ui.start.textContent = 'Start recording';
+      ui.start.disabled = Boolean(unsupported);
+      ui.playOnly.disabled = false;
       logEvent('game-loaded');
       window.unityInstance = instance;
     },
