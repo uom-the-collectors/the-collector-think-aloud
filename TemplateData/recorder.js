@@ -12,9 +12,20 @@
     'video/webm;codecs=vp8,opus',
     'video/webm',
   ];
+  // For streams with no audio track (e.g. screen only, without tab audio). Naming an audio codec
+  // for a video-only stream can leave the recorder waiting for audio that never arrives.
+  const VIDEO_ONLY_TYPES = [
+    'video/mp4;codecs=avc1.42E01E',
+    'video/mp4',
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+  ];
   const AUDIO_TYPES = ['audio/mp4;codecs=mp4a.40.2', 'audio/webm;codecs=opus', 'audio/webm'];
   const BITRATES = { screen: 3000000, webcam: 1000000, audio: 128000 };
   const CHUNK_MS = 1000;
+  // How long to wait for a recorder to report it has stopped before saving what it has
+  const STOP_TIMEOUT_MS = 8000;
   // Not used by the game's controls, so it can be pressed without leaving pointer lock
   const MARK_KEY = 'Backquote';
 
@@ -198,7 +209,8 @@
     for (const part of parts) {
       const stream = new MediaStream(part.tracks.filter(Boolean));
       const hasVideo = stream.getVideoTracks().length > 0;
-      const mimeType = pickType(hasVideo ? VIDEO_TYPES : AUDIO_TYPES);
+      const hasAudio = stream.getAudioTracks().length > 0;
+      const mimeType = pickType(hasVideo ? (hasAudio ? VIDEO_TYPES : VIDEO_ONLY_TYPES) : AUDIO_TYPES);
       const filename = `${base}_${part.kind}.${extensionFor(mimeType, hasVideo)}`;
       const sink = dir ? await folderSink(dir, filename) : memorySink(filename, mimeType);
       recorders.push(createRecorder(part.kind, stream, mimeType, sink));
@@ -245,7 +257,8 @@
   }
 
   function createRecorder(kind, stream, mimeType, sink) {
-    const options = { audioBitsPerSecond: BITRATES.audio };
+    const options = {};
+    if (stream.getAudioTracks().length) options.audioBitsPerSecond = BITRATES.audio;
     if (mimeType) options.mimeType = mimeType;
     if (stream.getVideoTracks().length) options.videoBitsPerSecond = BITRATES[kind] || BITRATES.webcam;
     const recorder = new MediaRecorder(stream, options);
@@ -265,11 +278,14 @@
       session.warnings.push(`The ${kind} recorder stopped: ${message}`);
       logEvent('recorder-error', { kind, message });
     });
-    // The last dataavailable fires before stop, so every chunk is queued by now
-    const finished = new Promise((resolve) => {
-      recorder.addEventListener('stop', () => resolve(writes.then(() => sink.close())), { once: true });
+    // The last dataavailable fires before stop, so every chunk is queued by then
+    const stopped = new Promise((resolve) => {
+      recorder.addEventListener('stop', () => resolve(), { once: true });
     });
-    return { kind, recorder, mimeType: recorder.mimeType || mimeType, finished };
+    // Closes the file once queued writes finish; safe to call more than once
+    let closing = null;
+    const close = () => (closing ||= writes.then(() => sink.close()));
+    return { kind, recorder, mimeType: recorder.mimeType || mimeType, stopped, close };
   }
 
   async function stopSession(reason) {
@@ -288,7 +304,16 @@
     const files = [];
     for (const r of session.recorders) {
       try {
-        files.push({ kind: r.kind, mimeType: r.mimeType, ...(await r.finished) });
+        // A recorder that never reports back must not leave the page stuck on "Saving…"
+        const reported = await Promise.race([
+          r.stopped.then(() => true),
+          new Promise((resolve) => setTimeout(() => resolve(false), STOP_TIMEOUT_MS)),
+        ]);
+        if (!reported) {
+          session.warnings.push(`The ${r.kind} recorder didn't finish cleanly, so the end of its file may be missing.`);
+          logEvent('recorder-stop-timeout', { kind: r.kind });
+        }
+        files.push({ kind: r.kind, mimeType: r.mimeType, ...(await r.close()) });
       } catch (err) {
         session.warnings.push(`Saving the ${r.kind} recording failed: ${err.message}`);
       }
