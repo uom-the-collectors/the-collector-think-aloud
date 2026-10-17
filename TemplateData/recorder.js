@@ -47,7 +47,9 @@
     consent: $('consent'),
     error: $('setup-error'),
     start: $('start-btn'),
-    playOnly: $('play-only'),
+    saveFieldset: $('save-fieldset'),
+    consentRow: $('consent-row'),
+    recordNote: $('record-note'),
     loadStatus: $('load-status'),
     bar: $('bar'),
     elapsed: $('elapsed'),
@@ -93,14 +95,31 @@
       ? 'This browser cannot record media. Use a recent version of Chrome or Edge.'
       : null;
   if (unsupported) {
-    showError(unsupported);
-    ui.start.disabled = true;
+    // The game can still be played, just not recorded
+    showError(`${unsupported} You can still play, but nothing will be recorded.`);
+    for (const box of [ui.useScreen, ui.useCamera, ui.useMic, ui.showPreview]) {
+      box.checked = false;
+      box.disabled = true;
+    }
   }
 
-  // Neither start button works until the game has loaded, so nobody lands on an empty canvas
+  // Play stays disabled until the game has loaded, so nobody lands on an empty canvas
   ui.start.disabled = true;
   ui.start.textContent = 'Loading game…';
-  ui.playOnly.disabled = true;
+
+  // Play records only what is ticked; with nothing ticked it just starts the game
+  const recordBoxes = [ui.useScreen, ui.useCamera, ui.useMic];
+  const wantsRecording = () => recordBoxes.some((box) => box.checked);
+  for (const box of recordBoxes) box.addEventListener('change', updateRecordOptions);
+  function updateRecordOptions() {
+    const recording = wantsRecording();
+    ui.saveFieldset.classList.toggle('off', !recording);
+    ui.consentRow.classList.toggle('off', !recording);
+    for (const control of ui.saveFieldset.querySelectorAll('input, button')) control.disabled = !recording;
+    ui.consent.disabled = !recording;
+    ui.recordNote.hidden = recording;
+    ui.recordNote.textContent = recording ? '' : 'Nothing is ticked, so the game will start without any recording.';
+  }
 
   ui.saveFolder.addEventListener('change', updateFolderRow);
   ui.saveDownload.addEventListener('change', updateFolderRow);
@@ -108,6 +127,7 @@
     ui.folderRow.classList.toggle('disabled', !ui.saveFolder.checked);
   }
   updateFolderRow();
+  updateRecordOptions();
 
   ui.chooseFolder.addEventListener('click', async () => {
     try {
@@ -126,8 +146,14 @@
     clearError();
     if (!gameLoadedAt) return showError('The game is still loading. Please wait for it to finish.');
 
-    const problem = !ui.useScreen.checked && !ui.useCamera.checked && !ui.useMic.checked ? 'Choose at least one thing to record.'
-      : ui.saveFolder.checked && !folder ? 'Choose a folder to save to, or switch to downloading at the end.'
+    // Nothing ticked: no consent, permissions or files, and no REC bar
+    if (!wantsRecording()) {
+      ui.setup.hidden = true;
+      ui.canvas.focus();
+      return;
+    }
+
+    const problem = ui.saveFolder.checked && !folder ? 'Choose a folder to save to, or switch to downloading at the end.'
       : !ui.consent.checked ? "Confirm the participant's consent before recording."
       : null;
     if (problem) return showError(problem);
@@ -167,15 +193,8 @@
       acquired.forEach((stream) => stream.getTracks().forEach((track) => track.stop()));
       showError(describeError(err));
       ui.start.disabled = false;
-      ui.start.textContent = 'Start recording';
+      ui.start.textContent = 'Play';
     }
-  });
-
-  // Just play: no consent, permissions or files, and no REC bar
-  ui.playOnly.addEventListener('click', () => {
-    if (!gameLoadedAt) return;
-    ui.setup.hidden = true;
-    ui.canvas.focus();
   });
 
   // ---------- recording ----------
@@ -487,9 +506,8 @@
     gameLoaded(instance) {
       gameLoadedAt = new Date();
       ui.loadStatus.textContent = 'Game loaded.';
-      ui.start.textContent = 'Start recording';
-      ui.start.disabled = Boolean(unsupported);
-      ui.playOnly.disabled = false;
+      ui.start.textContent = 'Play';
+      ui.start.disabled = false;
       logEvent('game-loaded');
       window.unityInstance = instance;
     },

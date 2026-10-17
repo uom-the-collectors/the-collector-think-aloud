@@ -16,31 +16,42 @@
           <h1>Think-aloud session</h1>
           <p class="lead">
             Thank you for helping us evaluate our game, <i>The Collector</i>. In this puzzle game set in 2176, you will
-            be welcomed to the Central Archive, where nothing is as it seems and everything is out of place. You will 
+            be welcomed to the Central Archive, where nothing is as it seems and everything is out of place. You will
             solve riddles to find the missing pieces of the Archive and restore order to the world.
           </p>
           <p>
-            You can choose how much data you'd like to share with us, but we would like to record your screen, webcam, 
-            and microphone so we can see how you play and hear your thoughts. You can stop the recording at any time
-            and choose what information you share. The gameplay shouldn't take much longer than 10 minutes (unless you 
-            want it to).
+            You can help us evaluate the game in one of two ways: a “think-aloud” session, or a questionnaire.
           </p>
           <p>
-            You may wish to assist us by completing a 
-              <a href="https://docs.google.com/forms/d/e/1FAIpQLSciVqfqefX_-TMu9uJ2niaUoIJBSwEQUQHYsUfdk-a8-_JoRQ/viewform?usp=publish-editor">short questionnaire</a>
-            about the game instead of sharing recording data with us (please don't do both).
+            If you don’t mind sharing recording data (screen, mic, and optionally webcam) with us, then the think-aloud
+            method will likely be the fastest/easiest to complete. The checkboxes below allow you to record your gameplay
+            and then save the recordings to your device when you finish playing. We ask that you then use a cloud storage
+            service like OneDrive to share these files with us. If you don’t have access to a cloud storage service like
+            OneDrive, please let us know and we can create a link for you to upload the files to.
+          </p>
+          <p>
+            If you’d rather not share recording data, please feel free to complete a
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSciVqfqefX_-TMu9uJ2niaUoIJBSwEQUQHYsUfdk-a8-_JoRQ/viewform?usp=publish-editor">short questionnaire</a> after playing the game instead. We request that think-aloud
+            participants do not participate in the questionnaire and vice versa (choose one).
+          </p>
+          <p>
+            Please note that regardless of the evaluation method you choose, the information you share with us will only
+            be accessed by students and staff at the University of Melbourne for educational and research purposes, and it
+            will be handled in compliance with the Australian Privacy Act (1988) and the University of Melbourne’s Privacy
+            Policy.
           </p>
         </header>
 
         <fieldset>
           <legend>Record</legend>
+          <p class="hint">Tick only what you are happy to share. Leave everything unticked to just play.</p>
           <label class="check"><input id="use-screen" type="checkbox" checked> Game screen and game audio</label>
           <label class="check"><input id="use-camera" type="checkbox" checked> Webcam</label>
           <label class="check"><input id="use-mic" type="checkbox" checked> Microphone</label>
           <label class="check sub"><input id="show-preview" type="checkbox"> Show the webcam preview to the participant</label>
         </fieldset>
 
-        <fieldset>
+        <fieldset id="save-fieldset">
           <legend>Save recordings</legend>
           <label class="check" id="folder-option"><input type="radio" name="save" id="save-folder"> Straight to a folder while recording <span class="tag">recommended</span></label>
           <div class="folder-row" id="folder-row">
@@ -50,14 +61,14 @@
           <label class="check"><input type="radio" name="save" id="save-download"> Download when the session ends</label>
         </fieldset>
 
-        <label class="check consent"><input id="consent" type="checkbox"> The participant has agreed to be recorded.</label>
+        <label class="check consent" id="consent-row"><input id="consent" type="checkbox"> The participant has agreed to be recorded.</label>
 
         <p id="setup-error" class="error" role="alert" hidden></p>
 
         <div class="actions">
-          <button type="submit" id="start-btn" class="primary">Start recording</button>
-          <button type="button" id="play-only" class="secondary">Play without recording</button>
+          <button type="submit" id="start-btn" class="primary" disabled>Loading game…</button>
         </div>
+        <p id="record-note" class="hint" hidden></p>
         <p class="hint">When the browser asks what to share, pick <strong>this tab</strong> and leave <strong>Also share tab audio</strong> on. Mark a moment with the <kbd>`</kbd> key or the Mark button.</p>
         <p id="load-status" class="muted small">Loading game… 0%</p>
       </form>

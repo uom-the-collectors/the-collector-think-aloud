@@ -108,6 +108,9 @@ fieldset {
 legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
 
 .check { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+/* Save options and consent only apply when something is ticked to record */
+.off { opacity: 0.45; }
+.check.off { cursor: default; }
 .check.sub { padding-left: 26px; color: var(--muted); font-size: 14px; }
 .check input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
 .consent {
